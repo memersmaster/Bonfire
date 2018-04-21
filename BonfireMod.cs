@@ -14,8 +14,7 @@ namespace BonfireMod
     public class BonfireMod : Mod<BonfireModSettings>, IMod, Modding.ILogger, ITogglableMod
     {
         public static BonfireMod Instance;
-        private static readonly FieldInfo[] ActionDataFields = typeof(ActionData).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        private static readonly FieldInfo ActionSpellData = ActionDataFields.Single(x => x.Name == "byteData");
+
         public override void Initialize()
         {
             Instance = this;
@@ -24,19 +23,16 @@ namespace BonfireMod
             ModHooks.Instance.NewGameHook += SetupGameRefs;
             ModHooks.Instance.SavegameLoadHook += SetupGameRefs;
             ModHooks.Instance.CharmUpdateHook += BenchApply;
-            ModHooks.Instance.DoAttackHook += CalculateCrit;
             ModHooks.Instance.SoulGainHook += SoulGain;
             ModHooks.Instance.HeroUpdateHook += MpRegen;
             ModHooks.Instance.BlueHealthHook += BlueHealth;
             ModHooks.Instance.FocusCostHook += FocusCost;
             ModHooks.Instance.SlashHitHook += CritHit;
             ModHooks.Instance.CursorHook += ShowCursor;
-
-            ModHooks.Instance.OnGetEventSenderHook += SpellDamage;
+            ModHooks.Instance.HitInstanceHook += SetDamages;
             ModHooks.Instance.AfterTakeDamageHook += ResShield;
-            //ModHooks.Instance.SetPlayerBoolHook += LookForBoss;
-            ModHooks.Instance.SceneChanged += onSceneLoad;
-            //UnityEngine.SceneManagement.SceneManager.sceneLoaded += onSceneLoad;
+            ModHooks.Instance.HeroUpdateHook += EnemyHealthManager;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManager_sceneLoaded;
 
             Instance.Log("Bonfire Mod v." + GetVersion() + " initialized!");
         }
@@ -46,28 +42,135 @@ namespace BonfireMod
             ModHooks.Instance.NewGameHook -= SetupGameRefs;
             ModHooks.Instance.SavegameLoadHook -= SetupGameRefs;
             ModHooks.Instance.CharmUpdateHook -= BenchApply;
-            ModHooks.Instance.DoAttackHook -= CalculateCrit;
             ModHooks.Instance.SoulGainHook -= SoulGain;
             ModHooks.Instance.HeroUpdateHook -= MpRegen;
             ModHooks.Instance.BlueHealthHook -= BlueHealth;
             ModHooks.Instance.FocusCostHook -= FocusCost;
             ModHooks.Instance.SlashHitHook -= CritHit;
             ModHooks.Instance.CursorHook -= ShowCursor;
-
-            ModHooks.Instance.OnGetEventSenderHook -= SpellDamage;
+            ModHooks.Instance.HitInstanceHook -= SetDamages;
             ModHooks.Instance.AfterTakeDamageHook -= ResShield;
-            ModHooks.Instance.SetPlayerBoolHook -= LookForBoss;
-            ModHooks.Instance.SceneChanged -= onSceneLoad;
-
-            pd.nailDamage = 5 + 4 * pd.nailSmithUpgrades;
-            PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
-            HeroController.instance.ATTACK_DURATION = 0.35f;
-            HeroController.instance.ATTACK_DURATION_CH = 0.25f;
-            HeroController.instance.ATTACK_COOLDOWN_TIME = 0.41f;
-            HeroController.instance.ATTACK_COOLDOWN_TIME_CH = 0.25f;
+            ModHooks.Instance.HeroUpdateHook -= EnemyHealthManager;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
 
             Instance.Log("Bonfire Mod disabled!");
         }
+
+        private HitInstance SetDamages(Fsm owner, HitInstance hit)
+        {
+            bool isSpell;
+
+            switch (hit.Source.name)
+            {
+                case "Fireball(Clone)":
+                case "Fireball":
+                case "Hit L": // Dive
+                case "Hit R": // Dive
+                case "Q Fall Damage": // Dive
+                case "Hit U": // Wraiths
+                    isSpell = true;
+                    break;
+                default:
+                    isSpell = false;
+                    break;
+            }
+
+            if (isSpell)
+            {
+                LogDebug($"[Vanilla] Spell name: {hit.Source.name} - {hit.Source}. Damage: {hit.DamageDealt}");
+                hit.DamageDealt = ls.SpellDamage(hit.DamageDealt, Settings.IntelligenceStat);
+                LogDebug($"[Bonfire] Spell name: {hit.Source.name} - {hit.Source}. Damage: {hit.DamageDealt}");
+            }
+
+            if (hit.Source.name.Contains("lash"))
+            {
+                Log($@"[Vanilla] Damage for {hit.Source.name} = {hit.DamageDealt}");
+                hit.DamageDealt = ls.NailDamage(Settings.StrengthStat);
+                Log($@"[Bonfire] Damage for {hit.Source.name} = {hit.DamageDealt}");
+                int num = new System.Random().Next(1, 100);
+                Crit = (num <= ls.CritChance(Settings.LuckStat));
+                if (Crit)
+                {                    
+                    hit.DamageDealt = ls.CritDamage(Settings.DexterityStat, hit.DamageDealt);
+                    Log($@"[Crit] Damage for {hit.Source.name} = {hit.DamageDealt}");
+                    spriteFlash.FlashGrimmflame();
+                    hc.carefreeShield.SetActive(true);
+                }
+            }
+
+            return hit;
+        }
+
+        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
+        {
+            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
+            {
+                if (hc == null && HeroController.instance != null)
+                {
+                    hc = HeroController.instance;
+                    if (spriteFlash == null)
+                    {
+                        spriteFlash = hc.GetComponent<SpriteFlash>();
+                        Instance.Log("Hero object set. SpriteFlash component gotten.");
+                    }
+                }
+            }
+
+            if (pd == null && PlayerData.instance != null)
+                pd = PlayerData.instance;
+
+            Dreamers = 0;
+            if (pd.lurienDefeated)
+            {
+                Dreamers++;
+            }
+            if (pd.hegemolDefeated)
+            {
+                Dreamers++;
+            }
+            if (pd.monomonDefeated)
+            {
+                Dreamers++;
+            }
+
+            enemiesHP = new Dictionary<GameObject, HealthManager>();
+            enemiesName = new Dictionary<GameObject, string>();
+        }
+
+        private void EnemyHealthManager()
+        {
+            foreach (HealthManager enemy in GameObject.FindObjectsOfType<HealthManager>())
+            {
+                if (!enemiesName.Keys.Any(f => f == enemy.gameObject) && enemy != null && enemy.hp < 5000)
+                {
+                    enemiesName.Add(enemy.gameObject, enemy.gameObject.name);
+                    enemiesHP.Add(enemy.gameObject, enemy);
+                    if (enemy.hp <= 5)
+                    {
+                        enemy.hp = 1;
+                    }
+                    else
+                    {
+                        LogDebug($@"Vanilla HP for {enemy.gameObject.name} = {enemy.hp}");
+                        enemy.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
+                        LogDebug($@"Bonfire HP for {enemy.gameObject.name} = {enemy.hp}");
+                    }
+                    enemy.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", enemy),Settings.LuckStat));
+                    enemy.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", enemy), Settings.LuckStat));
+                    enemy.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", enemy), Settings.LuckStat));
+                }
+            }
+        }
+
+        int GetGeo(string size, HealthManager enemy)
+        {
+            FieldInfo fi = enemy.GetType().GetField(size + "GeoDrops", BindingFlags.NonPublic | BindingFlags.Instance);
+            object geo = fi.GetValue(enemy);
+            int ret = geo == null ? 0 : (int)geo;
+            return ret;
+        }
+
+        
 
         public int ResShield(int hazardType, int damage)
         {
@@ -119,39 +222,6 @@ namespace BonfireMod
             return damage;
         }
 
-        public GameObject SpellDamage(GameObject go, Fsm pmfsm)
-        {
-
-
-            switch (go.name)
-            {
-                case "Fireball(Clone)":
-                case "Fireball":
-                case "Hit L": // Dive
-                case "Hit R": // Dive
-                case "Q Fall Damage": // Dive
-                case "Hit U": // Wraiths
-                    break;
-                default:
-                    return go;
-
-            }
-            PlayMakerFSM fsm = FSMUtility.LocateFSM(go, "damages_enemy");
-            if (fsm != null)
-            {
-                Log($"Setting Damage for {go.name} - {fsm.name}");
-                FsmInt value = fsm.FsmVariables.GetFsmInt("damageDealt");
-                if (value != null)
-                {
-                    Log($"Spell name: {go.name} - {fsm.name}. Damage: {value.Value}");
-                    value.Value = ls.SpellDamage(value.Value, Settings.IntelligenceStat);
-                    Log($"Set Damage for {go.name} - {fsm.name} to {value.Value}");
-                }
-            }
-            return go;
-        }
-
-
         public void ShowCursor()
         {
             if (hc != null && hc.cState != null && GameManager.instance != null)
@@ -181,114 +251,26 @@ namespace BonfireMod
 
         public void MpRegen()
         {
-            if (hc == null)
-                return;
-
-            this.manaRegenTime += Time.deltaTime;
-            if (this.manaRegenTime >= 1.11f)
+            if (HeroController.instance != null && PlayerData.instance != null)
             {
-                this.manaRegenTime -= 1.11f;
-                hc.AddMPChargeSpa(ls.SoulRegen(Settings.WisdomStat));
+                try
+                {
+                    if (manaRegenTime > 0)
+                    {
+                        manaRegenTime -= Time.deltaTime;
+                    }
+                    else
+                    {
+                        LogDebug($@"Recovering MP!");
+                        manaRegenTime = 1.11f;
+                        HeroController.instance.AddMPChargeSpa(ls.SoulRegen(Settings.WisdomStat));
+                    }
+                }
+                catch { }
             }
         }
 
         public int SoulGain(int num) => ls.ExtraSoul(Settings.WisdomStat, num);
-
-        public void CalculateCrit()
-        {
-            pd.nailDamage = this.OldNailDamage;
-            PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
-            int num = new System.Random().Next(1, 100);
-            this.Crit = (num <= ls.CritChance(Settings.LuckStat));
-            if (this.Crit)
-            {
-                pd.nailDamage = ls.CritDamage(Settings.DexterityStat, pd.nailDamage);
-                PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
-                spriteFlash.FlashGrimmflame();
-                hc.carefreeShield.SetActive(true);
-            }
-        }
-
-        //public void onSceneLoad(Scene dst, LoadSceneMode lsm)
-        public void onSceneLoad(string sceneName)
-        {
-            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
-            {
-                if (hc == null && HeroController.instance != null)
-                {
-                    hc = HeroController.instance;
-                    if (spriteFlash == null)
-                    {
-                        spriteFlash = hc.GetComponent<SpriteFlash>();
-                        Instance.Log("Hero object set. SpriteFlash component gotten.");
-                    }
-                }
-            }
-            if (pd == null && PlayerData.instance != null)
-                pd = PlayerData.instance;
-            int num = 0;
-            if (pd.lurienDefeated)
-            {
-                num++;
-            }
-            if (pd.hegemolDefeated)
-            {
-                num++;
-            }
-            if (pd.monomonDefeated)
-            {
-                num++;
-            }
-
-            GameObject[] array = UnityEngine.Object.FindObjectsOfType<GameObject>();
-            for (int i = 0; i < array.Length; i++)
-            {
-                GameObject go = array[i];
-                PlayMakerFSM playMakerFSM = FSMUtility.LocateFSM(go, "health_manager_enemy");
-                if (playMakerFSM == null)
-                {
-                    playMakerFSM = FSMUtility.LocateFSM(go, "health_manager");
-                }
-                if (playMakerFSM != null)
-                {
-                    playMakerFSM.FsmVariables.GetFsmInt("Geo Small").Value = ls.IncreaseGeo(playMakerFSM.FsmVariables.GetFsmInt("Geo Small").Value, Settings.LuckStat);
-                    playMakerFSM.FsmVariables.GetFsmInt("Geo Small Extra").Value = ls.IncreaseGeo(playMakerFSM.FsmVariables.GetFsmInt("Geo Small Extra").Value, Settings.LuckStat);
-                    playMakerFSM.FsmVariables.GetFsmInt("Geo Medium").Value = ls.IncreaseGeo(playMakerFSM.FsmVariables.GetFsmInt("Geo Medium").Value, Settings.LuckStat);
-                    playMakerFSM.FsmVariables.GetFsmInt("Geo Med Extra").Value = ls.IncreaseGeo(playMakerFSM.FsmVariables.GetFsmInt("Geo Med Extra").Value, Settings.LuckStat);
-                    playMakerFSM.FsmVariables.GetFsmInt("Geo Large").Value = ls.IncreaseGeo(playMakerFSM.FsmVariables.GetFsmInt("Geo Large").Value, Settings.LuckStat);
-                    playMakerFSM.FsmVariables.GetFsmInt("Geo Large Extra").Value = ls.IncreaseGeo(playMakerFSM.FsmVariables.GetFsmInt("Geo Large Extra").Value, Settings.LuckStat);
-                    //Uncomment this section to print dropped geo amount for all enemies on scene.
-                    //BonfireMod.Instance.LogDebug(string.Concat(new object[]
-                    //{
-                    //"Total geo for " + array[i].name + " : ",
-                    //playMakerFSM.FsmVariables.GetFsmInt("Geo Small").Value,
-                    //"-",
-                    //playMakerFSM.FsmVariables.GetFsmInt("Geo Small Extra").Value,
-                    //"-",
-                    //playMakerFSM.FsmVariables.GetFsmInt("Geo Medium").Value,
-                    //"-",
-                    //playMakerFSM.FsmVariables.GetFsmInt("Geo Med Extra").Value,
-                    //"-",
-                    //playMakerFSM.FsmVariables.GetFsmInt("Geo Large").Value,
-                    //"-",
-                    //playMakerFSM.FsmVariables.GetFsmInt("Geo Large Extra").Value
-                    //}));
-                    if (FSMUtility.GetInt(playMakerFSM, "HP") <= 5)
-                    {
-                        FSMUtility.SetInt(playMakerFSM, "HP", 1);
-                    }
-                    else
-                    {
-                        FSMUtility.SetInt(playMakerFSM, "HP", (int)((double)FSMUtility.GetInt(playMakerFSM, "HP") * (1.25 + (double)(num / 3)) * (2.5 / (1.0 + Math.Exp(-0.05 * (double)Settings.CurrentLv)))));
-                    }
-
-                }
-                PlayMakerFSM fsm = FSMUtility.LocateFSM(go, "damages_enemy");
-            }
-            Log($"Enemy HP multiplier: {(1.25 + num / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv)))}");
-            //Settings.RL3Levels = pd.trinket3;
-            //Settings.RL4Levels = pd.trinket4;
-        }
 
         public void SetupGameRefs()
         {
@@ -301,8 +283,18 @@ namespace BonfireMod
                 ls = LevellingSystem.Instance;
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
-            //BossRush = IsBossRush();
-            //Settings.FillBossRewards();
+            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
+            {
+                if (hc == null && HeroController.instance != null)
+                {
+                    hc = HeroController.instance;
+                    if (spriteFlash == null)
+                    {
+                        spriteFlash = hc.GetComponent<SpriteFlash>();
+                        Instance.Log("Hero object set. SpriteFlash component gotten.");
+                    }
+                }
+            }
         }
 
         public void SetupGameRefs(int id)
@@ -316,17 +308,22 @@ namespace BonfireMod
                 ls = LevellingSystem.Instance;
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
-            //BossRush = IsBossRush();
-            //Settings.FillBossRewards();
+            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
+            {
+                if (hc == null && HeroController.instance != null)
+                {
+                    hc = HeroController.instance;
+                    if (spriteFlash == null)
+                    {
+                        spriteFlash = hc.GetComponent<SpriteFlash>();
+                        Instance.Log("Hero object set. SpriteFlash component gotten.");
+                    }
+                }
+            }
         }
 
         public void BenchApply(PlayerData pd, HeroController hc)
         {
-            pd.nailDamage = LevellingSystem.Instance.NailDamage(Settings.StrengthStat);
-            OldNailDamage = pd.nailDamage;
-            PlayMakerFSM.BroadcastEvent("UPDATE NAIL DAMAGE");
-            //Settings.RL3Levels = pd.trinket3;
-            //Settings.RL4Levels = pd.trinket4;
             HeroController.instance.ATTACK_DURATION = 0.35f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
             HeroController.instance.ATTACK_DURATION_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
             HeroController.instance.ATTACK_COOLDOWN_TIME = 0.41f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
@@ -349,16 +346,9 @@ namespace BonfireMod
             Settings.SpentGeo = 0;
             Settings.TotalSpentGeo = 0;
             Settings.Respec = 1;
-            //Settings.FreeLevels = 0;
-            //Settings.SpentFreeLevels = 0;
-            //Settings.TotalFreeLevels = 0;
             Settings.GeoLevels = 0;
             Settings.TotalGeoLevels = 1;
             Settings.SpentGeoLevels = 0;
-            //Settings.RL3Levels = 0;
-            //Settings.RL4Levels = 0;
-            //Settings.RelicLevels = 0;
-            //Settings.FillBossRewards();
             Settings.StrengthStat = 1;
             Settings.DexterityStat = 1;
             Settings.IntelligenceStat = 1;
@@ -398,11 +388,10 @@ namespace BonfireMod
             PlayMakerFSM.BroadcastEvent("TRINK 4");
 
         }
-
-        //public static BonfireSettings Settings;
-        public override string GetVersion() => "1.1.3.1";
-        public int OldNailDamage { get; set; } = 5;
+        
+        public override string GetVersion() => "1.2.0.0";
         public int HitsSinceShielded { get; set; } = 0;
+        public int Dreamers;
         public bool Crit { get; set; } = false;
         public bool BossRush { get; set; } = false;
         public float manaRegenTime;
@@ -415,11 +404,7 @@ namespace BonfireMod
         public float VanillaSlashDurationCH;
         public float VanillaSlashCooldown;
         public float VanillaSlashCooldownCH;
-        public int FireballCloneDamage { get; set; } = 15;
-        public int FireballDamage { get; set; } = 15;
-        public int HitLDamage { get; set; } = 35;
-        public int HitRDamage { get; set; } = 30;
-        public int QFallDamage { get; set; } = 15;
-
+        public Dictionary<GameObject, HealthManager> enemiesHP;
+        public Dictionary<GameObject, string> enemiesName;
     }
 }
