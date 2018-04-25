@@ -32,9 +32,41 @@ namespace BonfireMod
             ModHooks.Instance.HitInstanceHook += SetDamages;
             ModHooks.Instance.AfterTakeDamageHook += ResShield;
             ModHooks.Instance.HeroUpdateHook += EnemyHealthManager;
+            ModHooks.Instance.HeroUpdateHook += Instance_HeroUpdateHook;
+            ModHooks.Instance.OnEnableEnemyHook += Instance_OnEnableEnemyHook;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManager_sceneLoaded;
 
             Instance.Log("Bonfire Mod v." + GetVersion() + " initialized!");
+        }
+
+        private bool Instance_OnEnableEnemyHook(GameObject enemy, bool isAlreadyDead)
+        {
+            HealthManager hm = enemy.GetComponent<HealthManager>();
+            if (hm != null && hm.hp < 5000 && !isAlreadyDead)
+            {
+                if (hm.hp <= 5)
+                {
+                    hm.hp = 1;
+                }
+                else
+                {
+                    LogDebug($@"Vanilla HP for {enemy.name} = {hm.hp}");
+                    hm.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
+                    LogDebug($@"Bonfire HP for {enemy.name} = {hm.hp}");
+                }
+                hm.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", hm), Settings.LuckStat));
+                hm.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", hm), Settings.LuckStat));
+                hm.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", hm), Settings.LuckStat));
+            }
+            return isAlreadyDead;
+        }
+
+        private void Instance_HeroUpdateHook()
+        {
+            if (GameManager.instance.inputHandler.inputActions.attack.WasPressed)
+            {
+                critRoll = UnityEngine.Random.Range(1, 100);
+            }
         }
 
         public void Unload()
@@ -84,15 +116,15 @@ namespace BonfireMod
 
             if (hit.Source.name.Contains("lash"))
             {
-                Log($@"[Vanilla] Damage for {hit.Source.name} = {hit.DamageDealt}");
+                LogDebug($@"[Vanilla] Damage for {hit.Source.name} = {hit.DamageDealt}");
                 hit.DamageDealt = ls.NailDamage(Settings.StrengthStat);
-                Log($@"[Bonfire] Damage for {hit.Source.name} = {hit.DamageDealt}");
-                int num = new System.Random().Next(1, 100);
-                Crit = (num <= ls.CritChance(Settings.LuckStat));
+                LogDebug($@"[Bonfire] Damage for {hit.Source.name} = {hit.DamageDealt}");
+                Log($@"Crit chance: {ls.CritChance(Settings.LuckStat)}. Rolled {critRoll}.");
+                Crit = (critRoll <= ls.CritChance(Settings.LuckStat));
                 if (Crit)
                 {                    
                     hit.DamageDealt = ls.CritDamage(Settings.DexterityStat, hit.DamageDealt);
-                    Log($@"[Crit] Damage for {hit.Source.name} = {hit.DamageDealt}");
+                    LogDebug($@"[Crit] Damage for {hit.Source.name} = {hit.DamageDealt}");
                     spriteFlash.FlashGrimmflame();
                     hc.carefreeShield.SetActive(true);
                 }
@@ -393,6 +425,7 @@ namespace BonfireMod
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
+        public int critRoll;
         public bool BossRush { get; set; } = false;
         public float manaRegenTime;
         public static GameManager gm;

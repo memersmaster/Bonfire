@@ -234,19 +234,17 @@ namespace BonfireMod
 
         public static bool InInventory()
         {
-            GameObject gameObject = GameObject.FindGameObjectWithTag("Inventory Top");
-            if (gameObject != null)
+
+            PlayMakerFSM inventory = GameManager.instance.inventoryFSM;
+            if (inventory != null)
             {
-                PlayMakerFSM component = gameObject.GetComponent<PlayMakerFSM>();
-                if (component != null)
+                FsmBool fsmBool = inventory.FsmVariables.GetFsmBool("Open");
+                if (fsmBool != null)
                 {
-                    FsmBool fsmBool = component.FsmVariables.GetFsmBool("Open");
-                    if (fsmBool != null)
-                    {
-                        return fsmBool.Value;
-                    }
+                    return fsmBool.Value;
                 }
             }
+            
             return false;
         }
 
@@ -260,7 +258,7 @@ namespace BonfireMod
         public float FocusCost(int totalInt) => (float)Math.Round(34.0 * Math.Exp(-0.01 * ((double)totalInt + 1.0)));
 
 
-        public int CritChance(int totalLck) => (int)Math.Round(6.5 * Math.Log((double)totalLck));
+        public int CritChance(int totalLck) => (int)Math.Round(6.5 * Math.Log(totalLck));
 
 
         public int DroppedGeo(int totalLck) => 1 + totalLck / 20;
@@ -381,16 +379,16 @@ namespace BonfireMod
         }
 
 
-        public int IncreaseGeo(int droppedGeo, int totalLck) => (int)((float)droppedGeo * (1f + (float)(totalLck - 1) / 20f));
+        public int IncreaseGeo(int droppedGeo, int totalLck) => (int)(droppedGeo * (1f + (totalLck - 1) / 20f));
 
 
-        public int CritDamage(int totalDex, int nailDamage) => (int)((double)nailDamage * (1.2 + Math.Log((double)totalDex)));
+        public int CritDamage(int totalDex, int nailDamage) => (int)(nailDamage * (1.2 + Math.Log(totalDex)));
 
 
-        public int SpellDamage(int baseDamage, int totalInt) => (int)Math.Round((double)baseDamage * Math.Pow(1.25, Math.Log((double)totalInt, 2.0)));
+        public int SpellDamage(int baseDamage, int totalInt) => (int)Math.Round(baseDamage * Math.Pow(1.25, Math.Log(totalInt, 2.0)));
 
 
-        public int ExtraSoul(int totalWsdm, int baseSoul) => (int)Math.Round((double)baseSoul + 5.0 * Math.Log((double)totalWsdm));
+        public int ExtraSoul(int totalWsdm, int baseSoul) => (int)Math.Round(baseSoul + 5.0 * Math.Log(totalWsdm));
 
 
         public int SoulRegen(int totalWsdm) => (int)Math.Round(0.32 + 0.68 * Math.Log(totalWsdm));
