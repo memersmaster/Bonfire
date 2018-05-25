@@ -36,7 +36,7 @@ namespace BonfireMod
         public void OnGUI()
         {
             if (GameManager.instance == null) return;
-            if (!(GameManager.instance.gameState == GameState.PLAYING || GameManager.instance.gameState == GameState.PAUSED)) return;
+            if (!(GameManager.instance.gameState == GameState.PLAYING || GameManager.instance.gameState == GameState.PAUSED) || InInventory()) return;
 
             if (trajanBold == null || trajanNormal == null)
             {
@@ -52,7 +52,7 @@ namespace BonfireMod
                     }
                 }
             }
-            if ((HeroController.instance.cState.nearBench ) || GameManager.instance.isPaused)
+            if (HeroController.instance.cState.nearBench || GameManager.instance.isPaused)
             {
                 GUI.enabled = true;
                 if (labelStyle == null)
@@ -231,21 +231,18 @@ namespace BonfireMod
             }
         }
 
-
         public static bool InInventory()
         {
-
-            PlayMakerFSM inventory = GameManager.instance.inventoryFSM;
-            if (inventory != null)
-            {
-                FsmBool fsmBool = inventory.FsmVariables.GetFsmBool("Open");
-                if (fsmBool != null)
-                {
-                    return fsmBool.Value;
-                }
-            }
-            
-            return false;
+            BonfireMod.Instance.Log("Checking inventory open");
+            GameObject gameObject = GameObject.FindGameObjectWithTag("Inventory Top");
+            if (gameObject == null) return false;
+            Modding.Logger.Log($"Inventory object {gameObject}");
+            PlayMakerFSM component = FSMUtility.LocateFSM(gameObject, "Inventory Control");
+            if (component == null) return false;
+            Modding.Logger.Log($"Inventory control fsm {component}");
+            FsmBool fsmBool = component.FsmVariables.GetFsmBool("Open");
+            Modding.Logger.Log($"Inventory open {fsmBool}");
+            return fsmBool != null && fsmBool.Value;
         }
 
 
@@ -472,6 +469,8 @@ namespace BonfireMod
         public int freeLevelsSpent;
 
         public int geoToLvUp;
+
+        public GameObject inventory;
     }
 
 }

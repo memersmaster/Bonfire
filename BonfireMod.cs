@@ -7,18 +7,20 @@ using System.Reflection;
 using HutongGames.PlayMaker.Actions;
 using Modding;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
+using ModCommon;
 
 
 namespace BonfireMod
 {
-    public class BonfireMod : Mod<BonfireModSettings>, IMod, Modding.ILogger, ITogglableMod
+    public class BonfireMod : Mod<BonfireModSettings>, ITogglableMod
     {
         public static BonfireMod Instance;
 
         public override void Initialize()
         {
             Instance = this;
-            Instance.Log("Bonfire Mod initializing!");
+            Instance.LogDebug("Bonfire Mod initializing!");
 
             ModHooks.Instance.NewGameHook += SetupGameRefs;
             ModHooks.Instance.SavegameLoadHook += SetupGameRefs;
@@ -31,12 +33,11 @@ namespace BonfireMod
             ModHooks.Instance.CursorHook += ShowCursor;
             ModHooks.Instance.HitInstanceHook += SetDamages;
             ModHooks.Instance.AfterTakeDamageHook += ResShield;
-            ModHooks.Instance.HeroUpdateHook += EnemyHealthManager;
             ModHooks.Instance.HeroUpdateHook += Instance_HeroUpdateHook;
             ModHooks.Instance.OnEnableEnemyHook += Instance_OnEnableEnemyHook;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManager_sceneLoaded;
 
-            Instance.Log("Bonfire Mod v." + GetVersion() + " initialized!");
+            Instance.LogDebug("Bonfire Mod v." + GetVersion() + " initialized!");
         }
 
         private bool Instance_OnEnableEnemyHook(GameObject enemy, bool isAlreadyDead)
@@ -82,10 +83,9 @@ namespace BonfireMod
             ModHooks.Instance.CursorHook -= ShowCursor;
             ModHooks.Instance.HitInstanceHook -= SetDamages;
             ModHooks.Instance.AfterTakeDamageHook -= ResShield;
-            ModHooks.Instance.HeroUpdateHook -= EnemyHealthManager;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
 
-            Instance.Log("Bonfire Mod disabled!");
+            Instance.LogDebug("Bonfire Mod disabled!");
         }
 
         private HitInstance SetDamages(Fsm owner, HitInstance hit)
@@ -119,7 +119,7 @@ namespace BonfireMod
                 LogDebug($@"[Vanilla] Damage for {hit.Source.name} = {hit.DamageDealt}");
                 hit.DamageDealt = ls.NailDamage(Settings.StrengthStat);
                 LogDebug($@"[Bonfire] Damage for {hit.Source.name} = {hit.DamageDealt}");
-                Log($@"Crit chance: {ls.CritChance(Settings.LuckStat)}. Rolled {critRoll}.");
+                LogDebug($@"Crit chance: {ls.CritChance(Settings.LuckStat)}. Rolled {critRoll}.");
                 Crit = (critRoll <= ls.CritChance(Settings.LuckStat));
                 if (Crit)
                 {                    
@@ -143,7 +143,7 @@ namespace BonfireMod
                     if (spriteFlash == null)
                     {
                         spriteFlash = hc.GetComponent<SpriteFlash>();
-                        Instance.Log("Hero object set. SpriteFlash component gotten.");
+                        Instance.LogDebug("Hero object set. SpriteFlash component gotten.");
                     }
                 }
             }
@@ -163,34 +163,6 @@ namespace BonfireMod
             if (pd.monomonDefeated)
             {
                 Dreamers++;
-            }
-
-            enemiesHP = new Dictionary<GameObject, HealthManager>();
-            enemiesName = new Dictionary<GameObject, string>();
-        }
-
-        private void EnemyHealthManager()
-        {
-            foreach (HealthManager enemy in GameObject.FindObjectsOfType<HealthManager>())
-            {
-                if (!enemiesName.Keys.Any(f => f == enemy.gameObject) && enemy != null && enemy.hp < 5000)
-                {
-                    enemiesName.Add(enemy.gameObject, enemy.gameObject.name);
-                    enemiesHP.Add(enemy.gameObject, enemy);
-                    if (enemy.hp <= 5)
-                    {
-                        enemy.hp = 1;
-                    }
-                    else
-                    {
-                        LogDebug($@"Vanilla HP for {enemy.gameObject.name} = {enemy.hp}");
-                        enemy.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
-                        LogDebug($@"Bonfire HP for {enemy.gameObject.name} = {enemy.hp}");
-                    }
-                    enemy.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", enemy),Settings.LuckStat));
-                    enemy.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", enemy), Settings.LuckStat));
-                    enemy.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", enemy), Settings.LuckStat));
-                }
             }
         }
 
@@ -323,8 +295,10 @@ namespace BonfireMod
                     if (spriteFlash == null)
                     {
                         spriteFlash = hc.GetComponent<SpriteFlash>();
-                        Instance.Log("Hero object set. SpriteFlash component gotten.");
+                        Instance.LogDebug("Hero object set. SpriteFlash component gotten.");
                     }
+
+                    hc.gameObject.AddComponent<LevellingSystem>();
                 }
             }
         }
@@ -348,8 +322,9 @@ namespace BonfireMod
                     if (spriteFlash == null)
                     {
                         spriteFlash = hc.GetComponent<SpriteFlash>();
-                        Instance.Log("Hero object set. SpriteFlash component gotten.");
+                        LogDebug("Hero object set. SpriteFlash component gotten.");
                     }
+                    hc.gameObject.AddComponent<LevellingSystem>();
                 }
             }
         }
@@ -387,14 +362,14 @@ namespace BonfireMod
             Settings.ResilienceStat = 1;
             Settings.WisdomStat = 1;
             Settings.LuckStat = 1;
-            Log("Set up new player data.");
+            LogDebug("Set up new player data.");
         }
 
 
         public void Reset(int save)
         {
             SetupNewModData();
-            Log("Reset player data.");
+            LogDebug("Reset player data.");
         }
 
         public bool IsBossRush()
@@ -404,9 +379,9 @@ namespace BonfireMod
                 if (mod == "BossRush")
                     num++;
             if (num == 1)
-                Instance.Log("Boss Rush loaded, allowing level up on pause menu.");
+                Instance.LogDebug("Boss Rush loaded, allowing level up on pause menu.");
             else
-                Instance.Log("Boss Rush not loaded.");
+                Instance.LogDebug("Boss Rush not loaded.");
             return num == 1;
         }
 
@@ -421,7 +396,7 @@ namespace BonfireMod
 
         }
         
-        public override string GetVersion() => "1.2.0.0";
+        public override string GetVersion() => "1.2.0.1";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
@@ -433,11 +408,5 @@ namespace BonfireMod
         public static PlayerData pd;
         public static HeroController hc;
         public static SpriteFlash spriteFlash;
-        public float VanillaSlashDuration;
-        public float VanillaSlashDurationCH;
-        public float VanillaSlashCooldown;
-        public float VanillaSlashCooldownCH;
-        public Dictionary<GameObject, HealthManager> enemiesHP;
-        public Dictionary<GameObject, string> enemiesName;
     }
 }

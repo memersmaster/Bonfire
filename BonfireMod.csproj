@@ -35,6 +35,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\ModdingAPI_1.3.1.5_test2\hollow_knight_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="ModCommon">
+      <HintPath>..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Hollow Knight\hollow_knight_data\Managed\Mods\ModCommon.dll</HintPath>
+    </Reference>
     <Reference Include="PlayMaker">
       <HintPath>..\..\..\PlayMaker.dll</HintPath>
     </Reference>
