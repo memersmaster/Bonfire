@@ -2,6 +2,7 @@
 using GlobalEnums;
 using HutongGames.PlayMaker;
 using UnityEngine;
+using Modding;
 
 namespace BonfireMod
 {
@@ -246,7 +247,7 @@ namespace BonfireMod
         }
 
 
-        public int NailDamage(int totalStr) => (int)Math.Round((double)(5 + 2 * PlayerData.instance.nailSmithUpgrades) * Math.Pow(1.25, Math.Log((double)totalStr, 2.0)));
+        public int NailDamage(int totalStr) => (int)Math.Round((double)(5 + 4 * PlayerData.instance.nailSmithUpgrades) * Math.Pow(1.25, Math.Log((double)totalStr, 2.0)));
 
 
         public int ExtraMasks(int totalRes) => (int)Math.Round(-0.4 + 2.6 * Math.Log((double)totalRes));
@@ -293,7 +294,8 @@ namespace BonfireMod
             BonfireMod.Instance.Settings.RelicLevels = 0;
             BonfireMod.Instance.Settings.CurrentLv = 1;
             PlayerData.instance.rancidEggs -= BonfireMod.Instance.Settings.Respec;
-            BonfireMod.Instance.Settings.Respec++;
+            BonfireMod.Instance.Settings.Respec += 1;
+            PlayerData.UpdateBlueHealth();
         }
 
 
@@ -372,7 +374,7 @@ namespace BonfireMod
             BonfireMod.Instance.Settings.ResilienceIncrease = 0;
             BonfireMod.Instance.Settings.IntelligenceIncrease = 0;
             BonfireMod.Instance.Settings.LuckIncrease = 0;
-
+            PlayerData.UpdateBlueHealth();
         }
 
 

@@ -27,7 +27,7 @@ namespace BonfireMod
             ModHooks.Instance.CharmUpdateHook += BenchApply;
             ModHooks.Instance.SoulGainHook += SoulGain;
             ModHooks.Instance.HeroUpdateHook += MpRegen;
-            ModHooks.Instance.BlueHealthHook += BlueHealth;
+            On.PlayerData.UpdateBlueHealth += PlayerData_UpdateBlueHealth;
             ModHooks.Instance.FocusCostHook += FocusCost;
             ModHooks.Instance.SlashHitHook += CritHit;
             ModHooks.Instance.CursorHook += ShowCursor;
@@ -40,21 +40,27 @@ namespace BonfireMod
             Instance.LogDebug("Bonfire Mod v." + GetVersion() + " initialized!");
         }
 
+        private void PlayerData_UpdateBlueHealth(On.PlayerData.orig_UpdateBlueHealth orig, PlayerData self)
+        {
+            orig(self);
+            self.SetInt("healthBlue", self.GetInt("healthBlue") + ls.ExtraMasks(Settings.ResilienceStat));
+        }
+
         private bool Instance_OnEnableEnemyHook(GameObject enemy, bool isAlreadyDead)
         {
             HealthManager hm = enemy.GetComponent<HealthManager>();
             if (hm != null && hm.hp < 5000 && !isAlreadyDead)
             {
-                if (hm.hp <= 5)
+                /*if (hm.hp <= 5)
                 {
                     hm.hp = 1;
                 }
                 else
-                {
+                {*/
                     LogDebug($@"Vanilla HP for {enemy.name} = {hm.hp}");
                     hm.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
                     LogDebug($@"Bonfire HP for {enemy.name} = {hm.hp}");
-                }
+                //}
                 hm.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", hm), Settings.LuckStat));
                 hm.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", hm), Settings.LuckStat));
                 hm.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", hm), Settings.LuckStat));
@@ -77,7 +83,7 @@ namespace BonfireMod
             ModHooks.Instance.CharmUpdateHook -= BenchApply;
             ModHooks.Instance.SoulGainHook -= SoulGain;
             ModHooks.Instance.HeroUpdateHook -= MpRegen;
-            ModHooks.Instance.BlueHealthHook -= BlueHealth;
+            On.PlayerData.UpdateBlueHealth -= PlayerData_UpdateBlueHealth;
             ModHooks.Instance.FocusCostHook -= FocusCost;
             ModHooks.Instance.SlashHitHook -= CritHit;
             ModHooks.Instance.CursorHook -= ShowCursor;
@@ -251,8 +257,8 @@ namespace BonfireMod
 
         public float FocusCost() => (float)ls.FocusCost(Settings.IntelligenceStat) / 33f;
 
-        public int BlueHealth() => ls.ExtraMasks(Settings.ResilienceStat);
-
+        public int BlueHPRestored() => ls.ExtraMasks(Settings.ResilienceStat);
+        
         public void MpRegen()
         {
             if (HeroController.instance != null && PlayerData.instance != null)
