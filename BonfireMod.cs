@@ -313,7 +313,7 @@ namespace BonfireMod
         }
         
 
-        public override string GetVersion() => "2.0.2";
+        public override string GetVersion() => "2.1.0";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
