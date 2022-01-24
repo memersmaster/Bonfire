@@ -119,13 +119,13 @@ namespace BonfireMod
                 hit.DamageDealt = ls.NailDamage(Settings.StrengthStat);
                 LogDebug($@"[Bonfire] Damage for {hit.Source.name} = {hit.DamageDealt}");
                 LogDebug($@"Crit chance: {ls.CritChance(Settings.LuckStat)}. Rolled {critRoll}.");
-                Crit = (critRoll <= ls.CritChance(Settings.LuckStat));
+                Crit = critRoll <= ls.CritChance(Settings.LuckStat);
                 if (Crit)
                 {                    
                     hit.DamageDealt = ls.CritDamage(Settings.DexterityStat, hit.DamageDealt);
                     LogDebug($@"[Crit] Damage for {hit.Source.name} = {hit.DamageDealt}");
-                    spriteFlash.FlashGrimmflame();
-                    hc.carefreeShield.SetActive(true);
+                    HeroController.instance.GetComponent<SpriteFlash>().FlashGrimmflame();
+                    HeroController.instance.carefreeShield.SetActive(true);
                 }
             }
 
@@ -134,21 +134,10 @@ namespace BonfireMod
 
         private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
-            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
-            {
-                if (hc == null && HeroController.instance != null)
-                {
-                    hc = HeroController.instance;
-                    if (spriteFlash == null)
-                    {
-                        spriteFlash = hc.GetComponent<SpriteFlash>();
-                        Instance.LogDebug("Hero object set. SpriteFlash component gotten.");
-                    }
-                }
-            }
-
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
+
+            Log($"Scene Player Data {pd}");
 
             Dreamers = 0;
             if (pd.lurienDefeated)
@@ -214,7 +203,7 @@ namespace BonfireMod
                 if (multiplier > 0 && num <= multiplier * iframes)
                 {
                     HitsSinceShielded = 0;
-                    hc.carefreeShield.SetActive(true);
+                    HeroController.instance.carefreeShield.SetActive(true);
                     damage = 0;
                 }
                 else
@@ -227,9 +216,9 @@ namespace BonfireMod
 
         public void ShowCursor()
         {
-            if (hc != null && hc.cState != null && GameManager.instance != null)
+            if (HeroController.instance != null && HeroController.instance.cState != null && GameManager.instance != null)
             {
-                Cursor.visible = hc.cState.nearBench || GameManager.instance.isPaused;
+                Cursor.visible = HeroController.instance.cState.nearBench || GameManager.instance.isPaused;
                 return;
             }
 
@@ -242,9 +231,9 @@ namespace BonfireMod
         {
             if (Crit && otherCollider.gameObject.layer == 11)
             {
-                hc.shadowRingPrefab.transform.SetScaleX(0.5f);
-                hc.shadowRingPrefab.transform.SetScaleY(0.5f);
-                UnityEngine.Object.Instantiate(hc.shadowRingPrefab, otherCollider.gameObject.transform.position, go.transform.rotation);
+                HeroController.instance.shadowRingPrefab.transform.SetScaleX(0.5f);
+                HeroController.instance.shadowRingPrefab.transform.SetScaleY(0.5f);
+                UnityEngine.Object.Instantiate(HeroController.instance.shadowRingPrefab, otherCollider.gameObject.transform.position, go.transform.rotation);
             }
         }
 
@@ -275,6 +264,8 @@ namespace BonfireMod
 
         public int SoulGain(int num) => ls.ExtraSoul(Settings.WisdomStat, num);
 
+        public void SetupGameRefs(int id) => SetupGameRefs();
+
         public void SetupGameRefs()
         {
             if (gm == null)
@@ -286,46 +277,7 @@ namespace BonfireMod
                 ls = LevellingSystem.Instance;
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
-            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
-            {
-                if (hc == null && HeroController.instance != null)
-                {
-                    hc = HeroController.instance;
-                    if (spriteFlash == null)
-                    {
-                        spriteFlash = hc.GetComponent<SpriteFlash>();
-                        Instance.LogDebug("Hero object set. SpriteFlash component gotten.");
-                    }
-
-                    hc.gameObject.AddComponent<LevellingSystem>();
-                }
-            }
-        }
-
-        public void SetupGameRefs(int id)
-        {
-            if (gm == null)
-            {
-                gm = GameManager.instance;
-                gm.gameObject.AddComponent<LevellingSystem>();
-            }
-            if (ls == null)
-                ls = LevellingSystem.Instance;
-            if (pd == null && PlayerData.instance != null)
-                pd = PlayerData.instance;
-            if (GameManager.instance.IsGameplayScene() && UIManager.instance.uiState.ToString() == "PLAYING")
-            {
-                if (hc == null && HeroController.instance != null)
-                {
-                    hc = HeroController.instance;
-                    if (spriteFlash == null)
-                    {
-                        spriteFlash = hc.GetComponent<SpriteFlash>();
-                        LogDebug("Hero object set. SpriteFlash component gotten.");
-                    }
-                    hc.gameObject.AddComponent<LevellingSystem>();
-                }
-            }
+            Log($"SetGame Player Data {pd}");
         }
 
         public void BenchApply(PlayerData pd, HeroController hc)
@@ -334,10 +286,6 @@ namespace BonfireMod
             HeroController.instance.ATTACK_DURATION_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
             HeroController.instance.ATTACK_COOLDOWN_TIME = 0.41f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
             HeroController.instance.ATTACK_COOLDOWN_TIME_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
-            LogDebug("Attack Duration: " + HeroController.instance.ATTACK_DURATION +
-                ". Attack Duration CH: " + HeroController.instance.ATTACK_DURATION_CH +
-                ". Attack Cooldown: " + HeroController.instance.ATTACK_COOLDOWN_TIME +
-                ". Attack Cooldown CH: " + HeroController.instance.ATTACK_COOLDOWN_TIME_CH);
         }
 
         public void SetupNewModData()
@@ -374,7 +322,5 @@ namespace BonfireMod
         public static GameManager gm;
         public LevellingSystem ls;
         public static PlayerData pd;
-        public static HeroController hc;
-        public static SpriteFlash spriteFlash;
     }
 }
