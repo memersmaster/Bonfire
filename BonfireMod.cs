@@ -137,8 +137,6 @@ namespace BonfireMod
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
 
-            Log($"Scene Player Data {pd}");
-
             Dreamers = 0;
             if (pd.lurienDefeated)
             {
@@ -277,7 +275,6 @@ namespace BonfireMod
                 ls = LevellingSystem.Instance;
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
-            Log($"SetGame Player Data {pd}");
         }
 
         public void BenchApply(PlayerData pd, HeroController hc)
