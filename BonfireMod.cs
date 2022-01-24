@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 
 namespace BonfireMod
 {
-    public class BonfireMod : Mod, ILocalSettings<BonfireModSettings>
+    public class BonfireMod : Mod, ITogglableMod, ILocalSettings<BonfireModSettings>
     {
         public static BonfireMod Instance;
 
@@ -365,7 +365,7 @@ namespace BonfireMod
         }
         
 
-        public override string GetVersion() => "2.0.1";
+        public override string GetVersion() => "2.0.2";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
