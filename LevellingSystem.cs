@@ -233,15 +233,11 @@ namespace BonfireMod
 
         public static bool InInventory()
         {
-            BonfireMod.Instance.Log("Checking inventory open");
             GameObject gameObject = GameObject.FindGameObjectWithTag("Inventory Top");
             if (gameObject == null) return false;
-            Modding.Logger.Log($"Inventory object {gameObject}");
             PlayMakerFSM component = FSMUtility.LocateFSM(gameObject, "Inventory Control");
             if (component == null) return false;
-            Modding.Logger.Log($"Inventory control fsm {component}");
             FsmBool fsmBool = component.FsmVariables.GetFsmBool("Open");
-            Modding.Logger.Log($"Inventory open {fsmBool}");
             return fsmBool != null && fsmBool.Value;
         }
 
