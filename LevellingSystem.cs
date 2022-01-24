@@ -2,7 +2,6 @@
 using GlobalEnums;
 using HutongGames.PlayMaker;
 using UnityEngine;
-using Modding;
 
 namespace BonfireMod
 {

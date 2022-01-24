@@ -1,43 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using Modding;
 
 namespace BonfireMod
 {
     [Serializable]
-    public class BonfireModSettings : IModSettings
+    public class BonfireModSettings
     {
-        public int StrengthStat { get => GetInt(1); set => SetInt(value); }
-        public int DexterityStat { get => GetInt(1); set => SetInt(value); }
-        public int IntelligenceStat { get => GetInt(1); set => SetInt(value); }
-        public int ResilienceStat { get => GetInt(1); set => SetInt(value); }
-        public int WisdomStat { get => GetInt(1); set => SetInt(value); }
-        public int LuckStat { get => GetInt(1); set => SetInt(value); }
-        public int StrengthIncrease { get => GetInt(0); set => SetInt(value); }
-        public int DexterityIncrease { get => GetInt(0); set => SetInt(value); }
-        public int IntelligenceIncrease { get => GetInt(0); set => SetInt(value); }
-        public int ResilienceIncrease { get => GetInt(0); set => SetInt(value); }
-        public int WisdomIncrease { get => GetInt(0); set => SetInt(value); }
-        public int LuckIncrease { get => GetInt(0); set => SetInt(value); }
-        public int GeoToLvUp { get => GetInt(0); set => SetInt(value); }
-        public int CurrentLv { get => GetInt(1); set => SetInt(value); }
-        public int SpentGeo { get => GetInt(0); set => SetInt(value); }
-        public int Respec { get => GetInt(1); set => SetInt(value); }
-        public int FreeLevels { get => GetInt(0); set => SetInt(value); }
-        public int GeoLevels { get => GetInt(0); set => SetInt(value); }
-        public int RL3Levels { get => GetInt(0); set => SetInt(value); }
-        public int RL4Levels { get => GetInt(0); set => SetInt(value); }
-        public int TotalFreeLevels { get => GetInt(0); set => SetInt(value); }
-        public int RelicLevels { get => GetInt(0); set => SetInt(value); }
-        public int SpentFreeLevels { get => GetInt(0); set => SetInt(value); }
-        public int TotalGeoLevels { get => GetInt(1); set => SetInt(value); }
-        public int TotalSpentGeo { get => GetInt(0); set => SetInt(value); }
-        public int SpentGeoLevels { get => GetInt(0); set => SetInt(value); }
+        public int StrengthStat = 1;
+        public int DexterityStat = 1;
+        public int IntelligenceStat = 1;
+        public int ResilienceStat = 1;
+        public int WisdomStat = 1;
+        public int LuckStat = 1;
+        public int StrengthIncrease = 0;
+        public int DexterityIncrease = 0;
+        public int IntelligenceIncrease = 0;
+        public int ResilienceIncrease = 0;
+        public int WisdomIncrease = 0;
+        public int LuckIncrease = 0;
+        public int GeoToLvUp = 0;
+        public int CurrentLv = 1;
+        public int SpentGeo = 0;
+        public int Respec = 1;
+        public int FreeLevels = 0;
+        public int GeoLevels = 0;
+        public int RL3Levels = 0;
+        public int RL4Levels = 0;
+        public int TotalFreeLevels = 0;
+        public int RelicLevels = 0;
+        public int SpentFreeLevels = 0;
+        public int TotalGeoLevels = 1;
+        public int TotalSpentGeo = 0;
+        public int SpentGeoLevels = 0;
 
         public Dictionary<string, string> BossRewards;
         public void FillBossRewards()
         {
-            if (this.BossRewards == null && BonfireMod.Instance.BossRush)
+            if (BossRewards == null && BonfireMod.Instance.BossRush)
             {
                 BossRewards = new Dictionary<string, string>()
                 {

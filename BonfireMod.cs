@@ -1,40 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using HutongGames.PlayMaker;
 using UnityEngine;
 using System.Reflection;
-using HutongGames.PlayMaker.Actions;
 using Modding;
 using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
-using ModCommon;
 
 
 namespace BonfireMod
 {
-    public class BonfireMod : Mod<BonfireModSettings>, ITogglableMod
+    public class BonfireMod : Mod, ITogglableMod, ILocalSettings<BonfireModSettings>
     {
         public static BonfireMod Instance;
+
+        public BonfireModSettings Settings = new BonfireModSettings();
+        public void OnLoadLocal(BonfireModSettings s) => Settings = s;
+        public BonfireModSettings OnSaveLocal() => Settings;
 
         public override void Initialize()
         {
             Instance = this;
             Instance.LogDebug("Bonfire Mod initializing!");
 
-            ModHooks.Instance.NewGameHook += SetupGameRefs;
-            ModHooks.Instance.SavegameLoadHook += SetupGameRefs;
-            ModHooks.Instance.CharmUpdateHook += BenchApply;
-            ModHooks.Instance.SoulGainHook += SoulGain;
-            ModHooks.Instance.HeroUpdateHook += MpRegen;
+            ModHooks.NewGameHook += SetupGameRefs;
+            ModHooks.SavegameLoadHook += SetupGameRefs;
+            ModHooks.CharmUpdateHook += BenchApply;
+            ModHooks.SoulGainHook += SoulGain;
+            ModHooks.HeroUpdateHook += MpRegen;
             On.PlayerData.UpdateBlueHealth += PlayerData_UpdateBlueHealth;
-            ModHooks.Instance.FocusCostHook += FocusCost;
-            ModHooks.Instance.SlashHitHook += CritHit;
-            ModHooks.Instance.CursorHook += ShowCursor;
-            ModHooks.Instance.HitInstanceHook += SetDamages;
-            ModHooks.Instance.AfterTakeDamageHook += ResShield;
-            ModHooks.Instance.HeroUpdateHook += Instance_HeroUpdateHook;
-            ModHooks.Instance.OnEnableEnemyHook += Instance_OnEnableEnemyHook;
+            ModHooks.FocusCostHook += FocusCost;
+            ModHooks.SlashHitHook += CritHit;
+            ModHooks.CursorHook += ShowCursor;
+            ModHooks.HitInstanceHook += SetDamages;
+            ModHooks.AfterTakeDamageHook += ResShield;
+            ModHooks.HeroUpdateHook += Instance_HeroUpdateHook;
+            ModHooks.OnEnableEnemyHook += Instance_OnEnableEnemyHook;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManager_sceneLoaded;
 
             Instance.LogDebug("Bonfire Mod v." + GetVersion() + " initialized!");
@@ -51,16 +51,10 @@ namespace BonfireMod
             HealthManager hm = enemy.GetComponent<HealthManager>();
             if (hm != null && hm.hp < 5000 && !isAlreadyDead)
             {
-                /*if (hm.hp <= 5)
-                {
-                    hm.hp = 1;
-                }
-                else
-                {*/
-                    LogDebug($@"Vanilla HP for {enemy.name} = {hm.hp}");
-                    hm.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
-                    LogDebug($@"Bonfire HP for {enemy.name} = {hm.hp}");
-                //}
+                LogDebug($@"Vanilla HP for {enemy.name} = {hm.hp}");
+                hm.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
+                LogDebug($@"Bonfire HP for {enemy.name} = {hm.hp}");
+
                 hm.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", hm), Settings.LuckStat));
                 hm.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", hm), Settings.LuckStat));
                 hm.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", hm), Settings.LuckStat));
@@ -78,17 +72,17 @@ namespace BonfireMod
 
         public void Unload()
         {
-            ModHooks.Instance.NewGameHook -= SetupGameRefs;
-            ModHooks.Instance.SavegameLoadHook -= SetupGameRefs;
-            ModHooks.Instance.CharmUpdateHook -= BenchApply;
-            ModHooks.Instance.SoulGainHook -= SoulGain;
-            ModHooks.Instance.HeroUpdateHook -= MpRegen;
+            ModHooks.NewGameHook -= SetupGameRefs;
+            ModHooks.SavegameLoadHook -= SetupGameRefs;
+            ModHooks.CharmUpdateHook -= BenchApply;
+            ModHooks.SoulGainHook -= SoulGain;
+            ModHooks.HeroUpdateHook -= MpRegen;
             On.PlayerData.UpdateBlueHealth -= PlayerData_UpdateBlueHealth;
-            ModHooks.Instance.FocusCostHook -= FocusCost;
-            ModHooks.Instance.SlashHitHook -= CritHit;
-            ModHooks.Instance.CursorHook -= ShowCursor;
-            ModHooks.Instance.HitInstanceHook -= SetDamages;
-            ModHooks.Instance.AfterTakeDamageHook -= ResShield;
+            ModHooks.FocusCostHook -= FocusCost;
+            ModHooks.SlashHitHook -= CritHit;
+            ModHooks.CursorHook -= ShowCursor;
+            ModHooks.HitInstanceHook -= SetDamages;
+            ModHooks.AfterTakeDamageHook -= ResShield;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
 
             Instance.LogDebug("Bonfire Mod disabled!");
@@ -193,7 +187,7 @@ namespace BonfireMod
                 float num = UnityEngine.Random.Range(1, 100);
                 float iframes = ls.IFrames(Settings.ResilienceStat);
                 float multiplier = 0f;
-                switch (this.HitsSinceShielded)
+                switch (HitsSinceShielded)
                 {
                     case 1:
                         multiplier = 10f;
@@ -220,13 +214,13 @@ namespace BonfireMod
                 LogDebug($"{num} <= {multiplier} * {iframes}");
                 if (multiplier > 0 && num <= multiplier * iframes)
                 {
-                    this.HitsSinceShielded = 0;
+                    HitsSinceShielded = 0;
                     hc.carefreeShield.SetActive(true);
                     damage = 0;
                 }
                 else
                 {
-                    this.HitsSinceShielded++;
+                    HitsSinceShielded++;
                 }
             }
             return damage;
@@ -381,7 +375,7 @@ namespace BonfireMod
         public bool IsBossRush()
         {
             int num = 0;
-            foreach (string mod in ModHooks.Instance.LoadedMods)
+            foreach (string mod in ModHooks.LoadedModsWithVersions.Keys)
                 if (mod == "BossRush")
                     num++;
             if (num == 1)
@@ -402,7 +396,7 @@ namespace BonfireMod
 
         }
         
-        public override string GetVersion() => "1.2.0.1";
+        public override string GetVersion() => "2.0.0.0";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
