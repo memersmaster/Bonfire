@@ -371,24 +371,13 @@ namespace BonfireMod
             SetupNewModData();
             LogDebug("Reset player data.");
         }
-
-        public void LookForBoss(string target, bool val)
-        {
-            if (!BossRush)
-                return;
-            foreach (KeyValuePair<string, string> boss in Settings.BossRewards)
-                if (target == nameof(boss))
-                    PlayerData.instance.SetIntInternal(boss.Value, PlayerData.instance.GetIntInternal(boss.Value) + 1);
-            PlayMakerFSM.BroadcastEvent("TRINK 4");
-
-        }
         
-        public override string GetVersion() => "2.0.0.0";
+
+        public override string GetVersion() => "2.0.0";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
         public int critRoll;
-        public bool BossRush { get; set; } = false;
         public float manaRegenTime;
         public static GameManager gm;
         public LevellingSystem ls;

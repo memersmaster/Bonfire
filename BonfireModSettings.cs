@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace BonfireMod
 {
@@ -32,51 +31,6 @@ namespace BonfireMod
         public int TotalGeoLevels = 1;
         public int TotalSpentGeo = 0;
         public int SpentGeoLevels = 0;
-
-        public Dictionary<string, string> BossRewards;
-        public void FillBossRewards()
-        {
-            if (BossRewards == null && BonfireMod.Instance.BossRush)
-            {
-                BossRewards = new Dictionary<string, string>()
-                {
-                    { "killedBigFly", "trinket4" },
-                    { "killedFalseKnight", "trinket4" },
-                    { "killedMegaMossCharger", "trinket4" },
-                    { "hornet1Defeated", "trinket4" },
-                    { "killedMawlek", "trinket4" },
-                    { "defeatedMantisLords", "trinket4" },
-                    { "mageLordDefeated", "trinket4" },
-                    { "killedMegaBeamMiner", "trinket4" },
-                    { "killedMegaJellyfish", "trinket4" },
-                    { "killedGhostXero", "trinket4" },
-                    { "killedGhostAladar", "trinket4" },
-                    { "killedGhostMarmu", "trinket4" },
-                    { "killedTraitorLord", "trinket4" },
-                    { "killedFlukeMother", "trinket4" },
-                    { "defeatedDungDefender", "trinket4" },
-                    { "killedGhostHu", "trinket4" },
-                    { "killedGhostGalien", "trinket4" },
-                    { "killedMimicSpider", "trinket4" },
-                    { "killedGhostNoEyes", "trinket4" },
-                    { "killedJarCollector", "trinket4" },
-                    { "newDataLobsterLancer", "trinket4" },
-                    { "killedInfectedKnight", "trinket4" },
-                    { "newDataBlackKnight", "trinket4" },
-                    { "newDataMegaBeamMiner", "trinket4" },
-                    { "hornetOutskirtsDefeated", "trinket4" },
-                    { "killedGhostMarkoth", "trinket4" },
-                    { "killedHollowKnight", "trinket4" },
-                    { "mageLordDreamDefeated", "trinket4" },
-                    { "infectedKnightDreamDefeated", "trinket4" },
-                    { "falseKnightDreamDefeated", "trinket4" },
-                    { "killedGreyPrince", "trinket4" },
-                    { "killedWhiteDefender", "trinket4" },
-                    { "killedFinalBoss", "trinket4" }
-                };
-                BonfireMod.Instance.Log("Boss Rewards list filled!");
-            }
-        }
 
         public static BonfireModSettings _instance;
     }

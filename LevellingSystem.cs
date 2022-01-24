@@ -31,7 +31,7 @@ namespace BonfireMod
 
         public bool CanLevelUp()
         {
-            return (HeroController.instance.cState.nearBench)&&(gotFreeLevel || BonfireMod.Instance.Settings.GeoToLvUp + BonfireMod.Instance.Settings.SpentGeo <= PlayerData.instance.geo);
+            return HeroController.instance.cState.nearBench && (gotFreeLevel || BonfireMod.Instance.Settings.GeoToLvUp + BonfireMod.Instance.Settings.SpentGeo <= PlayerData.instance.geo);
         }
         public void OnGUI()
         {
@@ -79,7 +79,7 @@ namespace BonfireMod
                 if (BonfireMod.Instance.Settings.CurrentLv == 1)
                     BonfireMod.Instance.Settings.TotalGeoLevels = 1;
                 BonfireMod.Instance.Settings.GeoLevels = BonfireMod.Instance.Settings.TotalGeoLevels + BonfireMod.Instance.Settings.SpentGeoLevels;
-                BonfireMod.Instance.Settings.GeoToLvUp = (int)(Math.Pow((double)BonfireMod.Instance.Settings.GeoLevels, 2.0) + (double)(10 * BonfireMod.Instance.Settings.GeoLevels) + 50.0);
+                BonfireMod.Instance.Settings.GeoToLvUp = (int)(Math.Pow(BonfireMod.Instance.Settings.GeoLevels, 2.0) + (10 * BonfireMod.Instance.Settings.GeoLevels) + 50.0);
                 BonfireMod.Instance.Settings.FreeLevels = BonfireMod.Instance.Settings.RL3Levels + BonfireMod.Instance.Settings.RL4Levels;
                 gotFreeLevel = !(BonfireMod.Instance.Settings.FreeLevels == 0);
                 string geoToLevelUp = BonfireMod.Instance.Settings.GeoToLvUp.ToString();
@@ -242,13 +242,13 @@ namespace BonfireMod
         }
 
 
-        public int NailDamage(int totalStr) => (int)Math.Round((double)(5 + 4 * PlayerData.instance.nailSmithUpgrades) * Math.Pow(1.25, Math.Log((double)totalStr, 2.0)));
+        public int NailDamage(int totalStr) => (int)Math.Round((5 + 4 * PlayerData.instance.nailSmithUpgrades) * Math.Pow(1.25, Math.Log(totalStr, 2.0)));
 
 
-        public int ExtraMasks(int totalRes) => (int)Math.Round(-0.4 + 2.6 * Math.Log((double)totalRes));
+        public int ExtraMasks(int totalRes) => (int)Math.Round(-0.4 + 2.6 * Math.Log(totalRes));
 
 
-        public float FocusCost(int totalInt) => (float)Math.Round(34.0 * Math.Exp(-0.01 * ((double)totalInt + 1.0)));
+        public float FocusCost(int totalInt) => (float)Math.Round(34.0 * Math.Exp(-0.01 * (totalInt + 1.0)));
 
 
         public int CritChance(int totalLck) => (int)Math.Round(6.5 * Math.Log(totalLck));
@@ -257,7 +257,7 @@ namespace BonfireMod
         public int DroppedGeo(int totalLck) => 1 + totalLck / 20;
 
 
-        public float AttackSpeed(int totalDex) => (float)Math.Round(2.7 / (1.0 + 1.82 * Math.Exp(-0.08 * (double)totalDex)) - 0.01, 2);
+        public float AttackSpeed(int totalDex) => (float)Math.Round(2.7 / (1.0 + 1.82 * Math.Exp(-0.08 * totalDex)) - 0.01, 2);
 
 
         public void Respec()
@@ -424,9 +424,9 @@ namespace BonfireMod
             float num = 0f;
             for (int i = 1; i < 8; i++)
             {
-                num += (float)(i + 1) * IFramesChance(totalRes, i);
+                num += (i + 1) * IFramesChance(totalRes, i);
             }
-            return (float)Math.Round((double)(100f / num));
+            return (float)Math.Round(100f / num);
         }
 
 
