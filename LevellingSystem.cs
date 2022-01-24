@@ -430,13 +430,6 @@ namespace BonfireMod
         }
 
 
-
-        //public static BonfireMod BonfireMod;
-
-
-        //public BonfireModSettings BonfireModSettings;
-
-
         public static LevellingSystem _instance;
 
 

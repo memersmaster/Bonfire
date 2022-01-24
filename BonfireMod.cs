@@ -363,13 +363,6 @@ namespace BonfireMod
             Settings.LuckStat = 1;
             LogDebug("Set up new player data.");
         }
-
-
-        public void Reset(int save)
-        {
-            SetupNewModData();
-            LogDebug("Reset player data.");
-        }
         
 
         public override string GetVersion() => "2.0.0";
