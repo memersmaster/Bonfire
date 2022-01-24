@@ -372,19 +372,6 @@ namespace BonfireMod
             LogDebug("Reset player data.");
         }
 
-        public bool IsBossRush()
-        {
-            int num = 0;
-            foreach (string mod in ModHooks.LoadedModsWithVersions.Keys)
-                if (mod == "BossRush")
-                    num++;
-            if (num == 1)
-                Instance.LogDebug("Boss Rush loaded, allowing level up on pause menu.");
-            else
-                Instance.LogDebug("Boss Rush not loaded.");
-            return num == 1;
-        }
-
         public void LookForBoss(string target, bool val)
         {
             if (!BossRush)
