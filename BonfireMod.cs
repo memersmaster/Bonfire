@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using HutongGames.PlayMaker;
 using UnityEngine;
 using System.Reflection;
@@ -8,13 +9,20 @@ using UnityEngine.SceneManagement;
 
 namespace BonfireMod
 {
-    public class BonfireMod : Mod, ITogglableMod, ILocalSettings<BonfireModSettings>
+    public class BonfireMod : Mod, IMenuMod, ITogglableMod, ILocalSettings<BonfireModSettings>
     {
         public static BonfireMod Instance;
 
         public BonfireModSettings Settings = new BonfireModSettings();
         public void OnLoadLocal(BonfireModSettings s) => Settings = s;
         public BonfireModSettings OnSaveLocal() => Settings;
+
+        // Mod menu
+        public bool ToggleButtonInsideMenu => true;
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        {
+            return new List<IMenuMod.MenuEntry> { toggleButtonEntry.Value };
+        }
 
         public override void Initialize()
         {
@@ -26,26 +34,26 @@ namespace BonfireMod
             ModHooks.CharmUpdateHook += BenchApply;
             ModHooks.SoulGainHook += SoulGain;
             ModHooks.HeroUpdateHook += MpRegen;
-            On.PlayerData.UpdateBlueHealth += PlayerData_UpdateBlueHealth;
+            On.PlayerData.UpdateBlueHealth += UpdateBlueHealth;
             ModHooks.FocusCostHook += FocusCost;
             ModHooks.SlashHitHook += CritHit;
             ModHooks.CursorHook += ShowCursor;
             ModHooks.HitInstanceHook += SetDamages;
             ModHooks.AfterTakeDamageHook += ResShield;
-            ModHooks.HeroUpdateHook += Instance_HeroUpdateHook;
-            ModHooks.OnEnableEnemyHook += Instance_OnEnableEnemyHook;
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+            ModHooks.HeroUpdateHook += HeroUpdate;
+            ModHooks.OnEnableEnemyHook += OnEnableEnemy;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneLoaded;
 
             Instance.LogDebug("Bonfire Mod v." + GetVersion() + " initialized!");
         }
 
-        private void PlayerData_UpdateBlueHealth(On.PlayerData.orig_UpdateBlueHealth orig, PlayerData self)
+        private void UpdateBlueHealth(On.PlayerData.orig_UpdateBlueHealth orig, PlayerData self)
         {
             orig(self);
             self.SetInt("healthBlue", self.GetInt("healthBlue") + ls.ExtraMasks(Settings.ResilienceStat));
         }
 
-        private bool Instance_OnEnableEnemyHook(GameObject enemy, bool isAlreadyDead)
+        private bool OnEnableEnemy(GameObject enemy, bool isAlreadyDead)
         {
             HealthManager hm = enemy.GetComponent<HealthManager>();
             if (hm != null && hm.hp < 5000 && !isAlreadyDead)
@@ -61,12 +69,10 @@ namespace BonfireMod
             return isAlreadyDead;
         }
 
-        private void Instance_HeroUpdateHook()
+        private void HeroUpdate()
         {
             if (GameManager.instance.inputHandler.inputActions.attack.WasPressed)
-            {
                 critRoll = UnityEngine.Random.Range(1, 100);
-            }
         }
 
         public void Unload()
@@ -76,13 +82,13 @@ namespace BonfireMod
             ModHooks.CharmUpdateHook -= BenchApply;
             ModHooks.SoulGainHook -= SoulGain;
             ModHooks.HeroUpdateHook -= MpRegen;
-            On.PlayerData.UpdateBlueHealth -= PlayerData_UpdateBlueHealth;
+            On.PlayerData.UpdateBlueHealth -= UpdateBlueHealth;
             ModHooks.FocusCostHook -= FocusCost;
             ModHooks.SlashHitHook -= CritHit;
             ModHooks.CursorHook -= ShowCursor;
             ModHooks.HitInstanceHook -= SetDamages;
             ModHooks.AfterTakeDamageHook -= ResShield;
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneManager_sceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneLoaded;
 
             Instance.LogDebug("Bonfire Mod disabled!");
         }
@@ -132,24 +138,18 @@ namespace BonfireMod
             return hit;
         }
 
-        private void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
+        private void SceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
 
             Dreamers = 0;
             if (pd.lurienDefeated)
-            {
                 Dreamers++;
-            }
             if (pd.hegemolDefeated)
-            {
                 Dreamers++;
-            }
             if (pd.monomonDefeated)
-            {
                 Dreamers++;
-            }
         }
 
         int GetGeo(string size, HealthManager enemy)
@@ -167,9 +167,7 @@ namespace BonfireMod
             if (Settings.ResilienceStat > 1 && hazardType == 1)
             {
                 if (HitsSinceShielded > 7)
-                {
                     HitsSinceShielded = 7;
-                }
                 float num = UnityEngine.Random.Range(1, 100);
                 float iframes = ls.IFrames(Settings.ResilienceStat);
                 float multiplier = 0f;
@@ -310,7 +308,7 @@ namespace BonfireMod
         }
         
 
-        public override string GetVersion() => "2.1.0";
+        public override string GetVersion() => "2.1.1";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
