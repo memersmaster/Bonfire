@@ -88,6 +88,8 @@ namespace BonfireMod
             ModHooks.CursorHook -= ShowCursor;
             ModHooks.HitInstanceHook -= SetDamages;
             ModHooks.AfterTakeDamageHook -= ResShield;
+            ModHooks.HeroUpdateHook -= HeroUpdate;
+            ModHooks.OnEnableEnemyHook -= OnEnableEnemy;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneLoaded;
 
             Instance.LogDebug("Bonfire Mod disabled!");
@@ -308,7 +310,7 @@ namespace BonfireMod
         }
         
 
-        public override string GetVersion() => "2.1.1";
+        public override string GetVersion() => "2.1.2";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
