@@ -7,15 +7,15 @@ using Modding;
 using UnityEngine.SceneManagement;
 
 
-namespace BonfireMod
+namespace Bonfire
 {
-    public class BonfireMod : Mod, IMenuMod, ITogglableMod, ILocalSettings<BonfireModSettings>
+    public class BonfireMod : Mod, IMenuMod, ITogglableMod, ILocalSettings<PlayerStatus>
     {
         public static BonfireMod Instance;
 
-        public BonfireModSettings Settings = new BonfireModSettings();
-        public void OnLoadLocal(BonfireModSettings s) => Settings = s;
-        public BonfireModSettings OnSaveLocal() => Settings;
+        public PlayerStatus Status = new PlayerStatus();
+        public void OnLoadLocal(PlayerStatus s) => Status = s;
+        public PlayerStatus OnSaveLocal() => Status;
 
         // Mod menu
         public bool ToggleButtonInsideMenu => true;
@@ -50,7 +50,7 @@ namespace BonfireMod
         private void UpdateBlueHealth(On.PlayerData.orig_UpdateBlueHealth orig, PlayerData self)
         {
             orig(self);
-            self.SetInt("healthBlue", self.GetInt("healthBlue") + ls.ExtraMasks(Settings.ResilienceStat));
+            self.SetInt("healthBlue", self.GetInt("healthBlue") + ls.ExtraMasks(Status.ResilienceStat));
         }
 
         private bool OnEnableEnemy(GameObject enemy, bool isAlreadyDead)
@@ -59,12 +59,12 @@ namespace BonfireMod
             if (hm != null && hm.hp < 5000 && !isAlreadyDead)
             {
                 LogDebug($@"Vanilla HP for {enemy.name} = {hm.hp}");
-                hm.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Settings.CurrentLv))));
+                hm.hp *= (int)((1.25 + (double)Dreamers / 3) * (2.5 / (1.0 + Math.Exp(-0.05 * Status.CurrentLv))));
                 LogDebug($@"Bonfire HP for {enemy.name} = {hm.hp}");
 
-                hm.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", hm), Settings.LuckStat));
-                hm.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", hm), Settings.LuckStat));
-                hm.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", hm), Settings.LuckStat));
+                hm.SetGeoSmall(ls.IncreaseGeo(GetGeo("small", hm), Status.LuckStat));
+                hm.SetGeoMedium(ls.IncreaseGeo(GetGeo("medium", hm), Status.LuckStat));
+                hm.SetGeoLarge(ls.IncreaseGeo(GetGeo("large", hm), Status.LuckStat));
             }
             return isAlreadyDead;
         }
@@ -117,20 +117,20 @@ namespace BonfireMod
             if (isSpell)
             {
                 LogDebug($"[Vanilla] Spell name: {hit.Source.name} - {hit.Source}. Damage: {hit.DamageDealt}");
-                hit.DamageDealt = ls.SpellDamage(hit.DamageDealt, Settings.IntelligenceStat);
+                hit.DamageDealt = ls.SpellDamage(hit.DamageDealt, Status.IntelligenceStat);
                 LogDebug($"[Bonfire] Spell name: {hit.Source.name} - {hit.Source}. Damage: {hit.DamageDealt}");
             }
 
             if (hit.Source.name.Contains("lash"))
             {
                 LogDebug($@"[Vanilla] Damage for {hit.Source.name} = {hit.DamageDealt}");
-                hit.DamageDealt = ls.NailDamage(Settings.StrengthStat);
+                hit.DamageDealt = ls.NailDamage(Status.StrengthStat);
                 LogDebug($@"[Bonfire] Damage for {hit.Source.name} = {hit.DamageDealt}");
-                LogDebug($@"Crit chance: {ls.CritChance(Settings.LuckStat)}. Rolled {critRoll}.");
-                Crit = critRoll <= ls.CritChance(Settings.LuckStat);
+                LogDebug($@"Crit chance: {ls.CritChance(Status.LuckStat)}. Rolled {critRoll}.");
+                Crit = critRoll <= ls.CritChance(Status.LuckStat);
                 if (Crit)
-                {                    
-                    hit.DamageDealt = ls.CritDamage(Settings.DexterityStat, hit.DamageDealt);
+                {
+                    hit.DamageDealt = ls.CritDamage(Status.DexterityStat, hit.DamageDealt);
                     LogDebug($@"[Crit] Damage for {hit.Source.name} = {hit.DamageDealt}");
                     HeroController.instance.GetComponent<SpriteFlash>().FlashGrimmflame();
                     HeroController.instance.carefreeShield.SetActive(true);
@@ -166,12 +166,12 @@ namespace BonfireMod
 
         public int ResShield(int hazardType, int damage)
         {
-            if (Settings.ResilienceStat > 1 && hazardType == 1)
+            if (Status.ResilienceStat > 1 && hazardType == 1)
             {
                 if (HitsSinceShielded > 7)
                     HitsSinceShielded = 7;
                 float num = UnityEngine.Random.Range(1, 100);
-                float iframes = ls.IFrames(Settings.ResilienceStat);
+                float iframes = ls.IFrames(Status.ResilienceStat);
                 float multiplier = 0f;
                 switch (HitsSinceShielded)
                 {
@@ -235,9 +235,9 @@ namespace BonfireMod
             }
         }
 
-        public float FocusCost() => (float)ls.FocusCost(Settings.IntelligenceStat) / 33f;
+        public float FocusCost() => (float)ls.FocusCost(Status.IntelligenceStat) / 33f;
 
-        public int BlueHPRestored() => ls.ExtraMasks(Settings.ResilienceStat);
+        public int BlueHPRestored() => ls.ExtraMasks(Status.ResilienceStat);
         
         public void MpRegen()
         {
@@ -253,14 +253,14 @@ namespace BonfireMod
                     {
                         LogDebug($@"Recovering MP!");
                         manaRegenTime = 1.11f;
-                        HeroController.instance.AddMPChargeSpa(ls.SoulRegen(Settings.WisdomStat));
+                        HeroController.instance.AddMPChargeSpa(ls.SoulRegen(Status.WisdomStat));
                     }
                 }
                 catch { }
             }
         }
 
-        public int SoulGain(int num) => ls.ExtraSoul(Settings.WisdomStat, num);
+        public int SoulGain(int num) => ls.ExtraSoul(Status.WisdomStat, num);
 
         public void SetupGameRefs(int id) => SetupGameRefs();
 
@@ -279,38 +279,38 @@ namespace BonfireMod
 
         public void BenchApply(PlayerData pd, HeroController hc)
         {
-            HeroController.instance.ATTACK_DURATION = 0.35f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
-            HeroController.instance.ATTACK_DURATION_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
-            HeroController.instance.ATTACK_COOLDOWN_TIME = 0.41f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
-            HeroController.instance.ATTACK_COOLDOWN_TIME_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Settings.DexterityStat);
+            HeroController.instance.ATTACK_DURATION = 0.35f / LevellingSystem.Instance.AttackSpeed(Status.DexterityStat);
+            HeroController.instance.ATTACK_DURATION_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Status.DexterityStat);
+            HeroController.instance.ATTACK_COOLDOWN_TIME = 0.41f / LevellingSystem.Instance.AttackSpeed(Status.DexterityStat);
+            HeroController.instance.ATTACK_COOLDOWN_TIME_CH = 0.25f / LevellingSystem.Instance.AttackSpeed(Status.DexterityStat);
         }
 
         public void SetupNewModData()
         {
-            Settings.CurrentLv = 1;
-            Settings.StrengthIncrease = 0;
-            Settings.DexterityIncrease = 0;
-            Settings.IntelligenceIncrease = 0;
-            Settings.ResilienceIncrease = 0;
-            Settings.WisdomIncrease = 0;
-            Settings.LuckIncrease = 0;
-            Settings.SpentGeo = 0;
-            Settings.TotalSpentGeo = 0;
-            Settings.Respec = 1;
-            Settings.GeoLevels = 0;
-            Settings.TotalGeoLevels = 1;
-            Settings.SpentGeoLevels = 0;
-            Settings.StrengthStat = 1;
-            Settings.DexterityStat = 1;
-            Settings.IntelligenceStat = 1;
-            Settings.ResilienceStat = 1;
-            Settings.WisdomStat = 1;
-            Settings.LuckStat = 1;
+            Status.CurrentLv = 1;
+            Status.StrengthIncrease = 0;
+            Status.DexterityIncrease = 0;
+            Status.IntelligenceIncrease = 0;
+            Status.ResilienceIncrease = 0;
+            Status.WisdomIncrease = 0;
+            Status.LuckIncrease = 0;
+            Status.SpentGeo = 0;
+            Status.TotalSpentGeo = 0;
+            Status.Respec = 1;
+            Status.GeoLevels = 0;
+            Status.TotalGeoLevels = 1;
+            Status.SpentGeoLevels = 0;
+            Status.StrengthStat = 1;
+            Status.DexterityStat = 1;
+            Status.IntelligenceStat = 1;
+            Status.ResilienceStat = 1;
+            Status.WisdomStat = 1;
+            Status.LuckStat = 1;
             LogDebug("Set up new player data.");
         }
         
 
-        public override string GetVersion() => "2.1.2";
+        public override string GetVersion() => "2.1.1";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;

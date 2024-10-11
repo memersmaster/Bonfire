@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace BonfireMod
+namespace Bonfire
 {
     [Serializable]
-    public class BonfireModSettings
+    public class PlayerStatus
     {
         public int StrengthStat = 1;
         public int DexterityStat = 1;
@@ -32,6 +32,6 @@ namespace BonfireMod
         public int TotalSpentGeo = 0;
         public int SpentGeoLevels = 0;
 
-        public static BonfireModSettings _instance;
+        public static PlayerStatus _instance;
     }
 }
