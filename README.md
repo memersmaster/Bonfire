@@ -2,6 +2,8 @@
 
 A level-up system in Hollow Knight 1.5 for a more realistic Dark Souls experience (a well-known Hollow Knight ripoff).
 
+![](https://github.com/TheodoreChristianRadu/Bonfire/blob/master/Resources/Bonfy.gif)
+
 ## Installation Instructions
 
 Only for Hollow Knight 1.5
