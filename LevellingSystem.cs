@@ -52,7 +52,7 @@ namespace Bonfire
                     }
                 }
             }
-            if (HeroController.instance.cState.nearBench || GameManager.instance.isPaused)
+            if (HeroController.instance.cState.nearBench && !GameManager.instance.isPaused)
             {
                 GUI.enabled = true;
                 if (labelStyle == null)

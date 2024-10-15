@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace Bonfire
 {
-    public class BonfireMod : Mod, IMenuMod, ITogglableMod, ILocalSettings<PlayerStatus>
+    public class BonfireMod : Mod, ILocalSettings<PlayerStatus>
     {
         public static BonfireMod Instance;
 
@@ -17,17 +17,12 @@ namespace Bonfire
         public void OnLoadLocal(PlayerStatus s) => Status = s;
         public PlayerStatus OnSaveLocal() => Status;
 
-        // Mod menu
-        public bool ToggleButtonInsideMenu => true;
-        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
-        {
-            return new List<IMenuMod.MenuEntry> { toggleButtonEntry.Value };
-        }
-
         public override void Initialize()
         {
             Instance = this;
             Instance.LogDebug("Bonfire Mod initializing!");
+
+            BonfyBench.Load();
 
             ModHooks.NewGameHook += SetupGameRefs;
             ModHooks.SavegameLoadHook += SetupGameRefs;
@@ -73,26 +68,6 @@ namespace Bonfire
         {
             if (GameManager.instance.inputHandler.inputActions.attack.WasPressed)
                 critRoll = UnityEngine.Random.Range(1, 100);
-        }
-
-        public void Unload()
-        {
-            ModHooks.NewGameHook -= SetupGameRefs;
-            ModHooks.SavegameLoadHook -= SetupGameRefs;
-            ModHooks.CharmUpdateHook -= BenchApply;
-            ModHooks.SoulGainHook -= SoulGain;
-            ModHooks.HeroUpdateHook -= MpRegen;
-            On.PlayerData.UpdateBlueHealth -= UpdateBlueHealth;
-            ModHooks.FocusCostHook -= FocusCost;
-            ModHooks.SlashHitHook -= CritHit;
-            ModHooks.CursorHook -= ShowCursor;
-            ModHooks.HitInstanceHook -= SetDamages;
-            ModHooks.AfterTakeDamageHook -= ResShield;
-            ModHooks.HeroUpdateHook -= HeroUpdate;
-            ModHooks.OnEnableEnemyHook -= OnEnableEnemy;
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneLoaded;
-
-            Instance.LogDebug("Bonfire Mod disabled!");
         }
 
         private HitInstance SetDamages(Fsm owner, HitInstance hit)
@@ -142,6 +117,8 @@ namespace Bonfire
 
         private void SceneLoaded(Scene arg0, LoadSceneMode arg1)
         {
+            BonfyBench.Replace(arg0);
+
             if (pd == null && PlayerData.instance != null)
                 pd = PlayerData.instance;
 
@@ -154,7 +131,7 @@ namespace Bonfire
                 Dreamers++;
         }
 
-        int GetGeo(string size, HealthManager enemy)
+        private int GetGeo(string size, HealthManager enemy)
         {
             FieldInfo fi = enemy.GetType().GetField(size + "GeoDrops", BindingFlags.NonPublic | BindingFlags.Instance);
             object geo = fi.GetValue(enemy);
@@ -310,7 +287,7 @@ namespace Bonfire
         }
         
 
-        public override string GetVersion() => "2.1.1";
+        public override string GetVersion() => "3.0.0";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;
