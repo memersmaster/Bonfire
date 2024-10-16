@@ -13,4 +13,4 @@ A level-up system in Hollow Knight 1.5 for a more realistic Dark Souls experienc
 Manual installation:
 + First, install the [modding API](https://github.com/hk-modding/api)
 + Then, download the [latest release](https://github.com/TheodoreChristianRadu/Bonfire/releases/latest) of the mod
-+ Finally, extract the `Bonfire.zip` into a `Bonfire` folder containing `Bonfire.dll` and `Bonfire.pdb` and move it to `Hollow Knight/Hollow Knight_Data/Managed/Mods` to install the mod
++ Finally, extract `Bonfire.zip` into a `Bonfire` folder containing `Bonfire.dll` and `Bonfire.pdb` and move it to `Hollow Knight/Hollow Knight_Data/Managed/Mods` to install the mod
