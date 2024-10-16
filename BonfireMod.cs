@@ -287,7 +287,7 @@ namespace Bonfire
         }
         
 
-        public override string GetVersion() => "3.0.0";
+        public override string GetVersion() => "3.0.1";
         public int HitsSinceShielded { get; set; } = 0;
         public int Dreamers;
         public bool Crit { get; set; } = false;

@@ -160,6 +160,10 @@ namespace Bonfire
             if (gameObject.scene.name == "Room_Colosseum_02")
                 bonfy.transform.localPosition = new Vector3(0, 1.6f, -0.2f);
 
+            // And Pantheon bench
+            if (gameObject.scene.name == "GG_Spa")
+                bonfy.transform.localPosition = new Vector3(0, 1.6f, -0.1f);
+
             // White Palace benches should be further down
             if (name == "WhiteBench" || gameObject.scene.name == "White_Palace_06")
                 bonfy.transform.localPosition = new Vector3(0, 1.1f, -0.3f);
