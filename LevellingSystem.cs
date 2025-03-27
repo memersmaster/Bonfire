@@ -242,7 +242,17 @@ namespace Bonfire
         }
 
 
-        public int NailDamage(int totalStr) => (int)Math.Round((5 + 4 * PlayerData.instance.nailSmithUpgrades) * Math.Pow(1.25, Math.Log(totalStr, 2.0)));
+        public int NailDamage(int totalStr)
+{
+    int baseDamage = (int)Math.Round((5 + 4 * PlayerData.instance.nailSmithUpgrades) * Math.Pow(1.25, Math.Log(totalStr, 2.0)));
+
+    if (PlayerData.instance.GetBool("equippedCharm_23") || PlayerData.instance.GetBool("equippedCharm_24"))
+    {
+        baseDamage = (int)Math.Round(baseDamage * 1.5);
+    }
+
+    return baseDamage;
+}
 
 
         public int ExtraMasks(int totalRes) => (int)Math.Round(-0.4 + 2.6 * Math.Log(totalRes));
