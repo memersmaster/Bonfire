@@ -1,0 +1,23 @@
+name: Build Bonfire DLL
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          dotnet restore
+
+      - name: Build
+        run: |
+          dotnet build --configuration Release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Bonfire-DLL
+          path: bin/Release/net*/Bonfire.dll
